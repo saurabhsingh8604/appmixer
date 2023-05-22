@@ -1,0 +1,549 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Appmixer SDK</title>
+    <style>
+        .container {
+            position: absolute;
+            top: 40;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        .am-wizard {
+            z-index: 10;
+        }
+    </style>
+</head>
+<body style="background: #262626; position: fixed; top: 0; right: 0; bottom: 0; left: 0; margin: 0;">
+<div style="display: flex; justify-content: center; align-items: center; height: 40px; border-bottom: solid 1px #3D3D3D;">
+    <img src="https://uploads-ssl.webflow.com/5a9d00dba5e9fa00010cb403/5c4f39b8a29a8f7a92f20dc3_Appmixer-logo.png"
+         style="width: 30px; margin-right: 20px;">
+    <select id="menu" style="width: 200px;">
+        <option value="designer" disabled>-- Select page --</option>
+        <option value="flowManager">Flow Manager</option>
+        <option value="accounts">Accounts</option>
+        <option value="peopleTasks">People Tasks</option>
+        <option value="insightsDashboard">Insights Dashboard</option>
+        <option value="insightsChartEditor">Insights Chart Editor</option>
+        <option value="insightsLogs">Insights Logs</option>
+        <option value="storage">Storage</option>
+        <option value="integrations">Integrations</option>
+        <option value="files">Files</option>
+    </select>
+
+    <select id="theme-select" style="width: 200px; margin-left: 15px">
+        <option value="light">Light Theme</option>
+        <option value="dark">Dark Theme</option>
+        <option value="light-custom-shapes">Light Theme Custom Shapes</option>
+    </select>
+
+    <select id="lang-select" style="width: 200px; margin-left: 15px">
+        <option value="en">English</option>
+        <option value="es">Spanish</option>
+    </select>
+</div>
+
+<div class="page" style="display: flex; justify-content: center; align-items: center;">
+    <div class="container">
+        <div id="your-flow-manager"></div>
+        <div id="your-designer"></div>
+        <div id="your-accounts"></div>
+        <div id="your-people-tasks"></div>
+        <div id="your-insights-dashboard"></div>
+        <div id="your-insights-chart-editor"></div>
+        <div id="your-insights-logs"></div>
+        <div id="your-storage"></div>
+        <div id="your-integrations"></div>
+        <div id="your-files"></div>
+    </div>
+</div>
+
+<script type="text/javascript" src="theme-dark.js"></script>
+<script type="text/javascript" src="strings-es.js"></script>
+<script type="text/javascript" src="component-shapes.js"></script>
+<script src="appmixer.js"></script>
+
+<script>
+    const BASE_URL = 'https://api.smartpaddle.appmixer.cloud';
+    const USERNAME = 'aman.rath@bizongo.com';
+    const PASSWORD = '@@Bizongo1';
+
+    /* Create your Appmixer SDK instance. */
+    var appmixer = new Appmixer({
+        baseUrl: BASE_URL,
+        componentShapes: window.COMPONENT_SHAPES // Register custom component shapes (optional).
+    });
+
+    /* Enable Developer Mode to access all features. */
+    appmixer.set('devMode', true);
+    appmixer.set('theme', window.THEME_DARK);
+
+    /* Authenticate user. */
+    appmixer.api.authenticateUser(USERNAME, PASSWORD).then((auth) => {
+        appmixer.set('accessToken', auth.token);
+        start();
+    }).catch((error) => {
+        if (error.response && error.response.status === 403) {
+            // Virtual user not yet created in Appmixer. Create one with a random password..
+            appmixer.api.signupUser(USERNAME, PASSWORD).then(function(auth) {
+                appmixer.api.authenticateUser(USERNAME, PASSWORD).then((auth) => {
+                    appmixer.set('accessToken', auth.token);
+                    // ... Store auth.token and appmixerUserPassword in your DB.
+                    start();
+                });
+            }).catch(function() {
+                alert('Something went wrong.');
+            });
+        } else {
+            alert('Something went wrong.');
+            console.error(error);
+        }
+    });
+
+    function start() {
+
+        // If you are using light theme, set this string to 'light'
+        // If you are using dark theme, set this string to 'dark'
+        var theme = 'light';
+        var lang = 'en';
+
+        var labels = {
+            flowManager: {
+                en: {
+                    edit: 'Edit',
+                    clone: 'Clone',
+                    share: 'Share',
+                    insights: 'Insights',
+                    delete: 'Delete',
+                    runningFlows: 'Running flows',
+                    stoppedFlows: 'Stopped flows',
+                    myFlows: 'My flows',
+                    sharedWithOthers: 'Shared with others',
+                    sharedWithMe: 'Shared with me',
+                    lastModified: 'Last Modified',
+                    lastCreated: 'Last Created'
+                },
+                es: {
+                    edit: 'Editar',
+                    clone: 'Clonar',
+                    share: 'Compartir',
+                    insights: 'Percepciones',
+                    delete: 'Eliminar',
+                    runningFlows: 'Flujos en ejecución',
+                    stoppedFlows: 'Flujos detenidos',
+                    myFlows: 'Mis flujos',
+                    sharedWithOthers: 'Compartido con otros',
+                    sharedWithMe: 'Comparte conmigo',
+                    lastModified: 'Última modificación',
+                    lastCreated: 'Última creación'
+                }
+            },
+            designer: {
+                en: {
+                    insightsLogs: 'Insights Logs',
+                    clone: 'Clone',
+                    share: 'Share',
+                    exportSVG: 'Export to SVG',
+                    exportPNG: 'Export to PNG',
+                    print: 'Print',
+                    wizardBuilder: 'Wizard Builder'
+                },
+                es: {
+                    insightsLogs: 'Percepciones',
+                    clone: 'Clonar',
+                    share: 'Compartir',
+                    exportSVG: 'Exportar a SVG',
+                    exportPNG: 'Export a PNG',
+                    print: 'Imprimir',
+                    wizardBuilder: 'Generador de asistente abierto'
+                }
+            }
+        };
+
+        var shareTypes = {
+            en: [
+                { label: 'Email', value: 'email', placeholder: 'Enter email address' },
+                { label: 'Scope', value: 'scope', placeholder: 'Enter scope' },
+                { label: 'Domain', value: 'domain', placeholder: 'Enter domain' }
+            ],
+            es: [
+                { label: 'Correo electrónico', value: 'email', placeholder: 'Escribir un correo electrónico' },
+                { label: 'Alcance', value: 'scope', placeholder: 'Escribir un alcance' },
+                { label: 'Dominio', value: 'domain', placeholder: 'Escribir un dominio' }
+            ]
+        };
+
+        var sharePermissions = {
+            en: [
+                { label: 'Read', value: 'read' },
+                { label: 'Start', value: 'start' },
+                { label: 'Stop', value: 'stop' }
+            ],
+            es: [
+                { label: 'Leer', value: 'read' },
+                { label: 'Iniciar', value: 'start' },
+                { label: 'Detener', value: 'stop' }
+            ]
+        };
+
+        var icons = {
+            flowManager: {
+                light: {
+                    edit: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0Ij48cGF0aCBkPSJNMyAxNy4yNVYyMWgzLjc1TDE3LjgxIDkuOTRsLTMuNzUtMy43NUwzIDE3LjI1ek0yMC43MSA3LjA0Yy4zOS0uMzkuMzktMS4wMiAwLTEuNDFsLTIuMzQtMi4zNGMtLjM5LS4zOS0xLjAyLS4zOS0xLjQxIDBsLTEuODMgMS44MyAzLjc1IDMuNzUgMS44My0xLjgzeiIvPjxwYXRoIGQ9Ik0wIDBoMjR2MjRIMHoiIGZpbGw9Im5vbmUiLz48L3N2Zz4=',
+                    insights: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNNSw4LjMyNUg3LjM3NXY3Ljc1OEg1Wk05LjQzMyw1SDExLjY1VjE2LjA4M0g5LjQzM1ptNC40MzMsNi4zMzNoMi4yMTd2NC43NUgxMy44NjdaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMS4wNDIgLTEuMDQyKSIgZmlsbD0iIzEyMTIxMiIvPjxwYXRoIGQ9Ik0wLDBIMTlWMTlIMFoiIGZpbGw9Im5vbmUiLz48L3N2Zz4=',
+                    clone: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTMuNTgzLDUuMTY3SDJWMTYuMjVhMS41ODgsMS41ODgsMCwwLDAsMS41ODMsMS41ODNIMTQuNjY3VjE2LjI1SDMuNTgzWk0xNi4yNSwySDYuNzVBMS41ODgsMS41ODgsMCwwLDAsNS4xNjcsMy41ODN2OS41QTEuNTg4LDEuNTg4LDAsMCwwLDYuNzUsMTQuNjY3aDkuNWExLjU4OCwxLjU4OCwwLDAsMCwxLjU4My0xLjU4M3YtOS41QTEuNTg4LDEuNTg4LDAsMCwwLDE2LjI1LDJabS0uNzkyLDcuMTI1SDEyLjI5MnYzLjE2N0gxMC43MDhWOS4xMjVINy41NDJWNy41NDJoMy4xNjdWNC4zNzVoMS41ODNWNy41NDJoMy4xNjdaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC40MTcgLTAuNDE3KSIgZmlsbD0iIzEyMTIxMiIvPjwvc3ZnPg==',
+                    share: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE0Ljg3NSwxMy4xNDdhMi4zMDUsMi4zMDUsMCwwLDAtMS41NTIuNjFMNy42NzksMTAuNDcxYTIuNTkyLDIuNTkyLDAsMCwwLC4wNzEtLjU1NCwyLjU5MiwyLjU5MiwwLDAsMC0uMDcxLS41NTRMMTMuMjYsNi4xMDlhMi4zNywyLjM3LDAsMSwwLS43Ni0xLjczNCwyLjU5MiwyLjU5MiwwLDAsMCwuMDcxLjU1NEw2Ljk5LDguMTgzYTIuMzc1LDIuMzc1LDAsMSwwLDAsMy40NjdsNS42MzcsMy4yOTNhMi4yMzMsMi4yMzMsMCwwLDAtLjA2My41MTUsMi4zMTIsMi4zMTIsMCwxLDAsMi4zMTItMi4zMTJaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC42MjUgLTAuNDE3KSIvPjwvc3ZnPg==',
+                    remove: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0Ij48cGF0aCBkPSJNMCAwaDI0djI0SDBWMHoiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNiAxOWMwIDEuMS45IDIgMiAyaDhjMS4xIDAgMi0uOSAyLTJWN0g2djEyem0yLjQ2LTcuMTJsMS40MS0xLjQxTDEyIDEyLjU5bDIuMTItMi4xMiAxLjQxIDEuNDFMMTMuNDEgMTRsMi4xMiAyLjEyLTEuNDEgMS40MUwxMiAxNS40MWwtMi4xMiAyLjEyLTEuNDEtMS40MUwxMC41OSAxNGwtMi4xMy0yLjEyek0xNS41IDRsLTEtMWgtNWwtMSAxSDV2MmgxNFY0eiIvPjxwYXRoIGQ9Ik0wIDBoMjR2MjRIMHoiIGZpbGw9Im5vbmUiLz48L3N2Zz4='
+                },
+                dark: {
+                    edit: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIHdpZHRoPSIxOHB4IiBoZWlnaHQ9IjE4cHgiPjxwYXRoIGQ9Ik0zIDE3LjI1VjIxaDMuNzVMMTcuODEgOS45NGwtMy43NS0zLjc1TDMgMTcuMjV6TTIwLjcxIDcuMDRjLjM5LS4zOS4zOS0xLjAyIDAtMS40MWwtMi4zNC0yLjM0Yy0uMzktLjM5LTEuMDItLjM5LTEuNDEgMGwtMS44MyAxLjgzIDMuNzUgMy43NSAxLjgzLTEuODN6Ii8+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==',
+                    insights: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNNSw4LjMyNUg3LjM3NXY3Ljc1OEg1Wk05LjQzMyw1SDExLjY1VjE2LjA4M0g5LjQzM1ptNC40MzMsNi4zMzNoMi4yMTd2NC43NUgxMy44NjdaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMS4wNDIgLTEuMDQyKSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0wLDBIMTlWMTlIMFoiIGZpbGw9Im5vbmUiLz48L3N2Zz4=',
+                    clone: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTMuNTgzLDUuMTY3SDJWMTYuMjVhMS41ODgsMS41ODgsMCwwLDAsMS41ODMsMS41ODNIMTQuNjY3VjE2LjI1SDMuNTgzWk0xNi4yNSwySDYuNzVBMS41ODgsMS41ODgsMCwwLDAsNS4xNjcsMy41ODN2OS41QTEuNTg4LDEuNTg4LDAsMCwwLDYuNzUsMTQuNjY3aDkuNWExLjU4OCwxLjU4OCwwLDAsMCwxLjU4My0xLjU4M3YtOS41QTEuNTg4LDEuNTg4LDAsMCwwLDE2LjI1LDJabS0uNzkyLDcuMTI1SDEyLjI5MnYzLjE2N0gxMC43MDhWOS4xMjVINy41NDJWNy41NDJoMy4xNjdWNC4zNzVoMS41ODNWNy41NDJoMy4xNjdaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC40MTcgLTAuNDE3KSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==',
+                    share: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE0Ljg3NSwxMy4xNDdhMi4zMDUsMi4zMDUsMCwwLDAtMS41NTIuNjFMNy42NzksMTAuNDcxYTIuNTkyLDIuNTkyLDAsMCwwLC4wNzEtLjU1NCwyLjU5MiwyLjU5MiwwLDAsMC0uMDcxLS41NTRMMTMuMjYsNi4xMDlhMi4zNywyLjM3LDAsMSwwLS43Ni0xLjczNCwyLjU5MiwyLjU5MiwwLDAsMCwuMDcxLjU1NEw2Ljk5LDguMTgzYTIuMzc1LDIuMzc1LDAsMSwwLDAsMy40NjdsNS42MzcsMy4yOTNhMi4yMzMsMi4yMzMsMCwwLDAtLjA2My41MTUsMi4zMTIsMi4zMTIsMCwxLDAsMi4zMTItMi4zMTJaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC42MjUgLTAuNDE3KSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==',
+                    remove: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIHdpZHRoPSIxOHB4IiBoZWlnaHQ9IjE4cHgiPjxwYXRoIGQ9Ik0wIDBoMjR2MjRIMFYweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik02IDE5YzAgMS4xLjkgMiAyIDJoOGMxLjEgMCAyLS45IDItMlY3SDZ2MTJ6bTIuNDYtNy4xMmwxLjQxLTEuNDFMMTIgMTIuNTlsMi4xMi0yLjEyIDEuNDEgMS40MUwxMy40MSAxNGwyLjEyIDIuMTItMS40MSAxLjQxTDEyIDE1LjQxbC0yLjEyIDIuMTItMS40MS0xLjQxTDEwLjU5IDE0bC0yLjEzLTIuMTJ6TTE1LjUgNGwtMS0xaC01bC0xIDFINXYyaDE0VjR6Ii8+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg=='
+                }
+            },
+            designer: {
+                light: {
+                    insights: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNNSw4LjMyNUg3LjM3NXY3Ljc1OEg1Wk05LjQzMyw1SDExLjY1VjE2LjA4M0g5LjQzM1ptNC40MzMsNi4zMzNoMi4yMTd2NC43NUgxMy44NjdaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMS4wNDIgLTEuMDQyKSIgZmlsbD0iIzEyMTIxMiIvPjxwYXRoIGQ9Ik0wLDBIMTlWMTlIMFoiIGZpbGw9Im5vbmUiLz48L3N2Zz4=',
+                    clone: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTMuNTgzLDUuMTY3SDJWMTYuMjVhMS41ODgsMS41ODgsMCwwLDAsMS41ODMsMS41ODNIMTQuNjY3VjE2LjI1SDMuNTgzWk0xNi4yNSwySDYuNzVBMS41ODgsMS41ODgsMCwwLDAsNS4xNjcsMy41ODN2OS41QTEuNTg4LDEuNTg4LDAsMCwwLDYuNzUsMTQuNjY3aDkuNWExLjU4OCwxLjU4OCwwLDAsMCwxLjU4My0xLjU4M3YtOS41QTEuNTg4LDEuNTg4LDAsMCwwLDE2LjI1LDJabS0uNzkyLDcuMTI1SDEyLjI5MnYzLjE2N0gxMC43MDhWOS4xMjVINy41NDJWNy41NDJoMy4xNjdWNC4zNzVoMS41ODNWNy41NDJoMy4xNjdaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC40MTcgLTAuNDE3KSIgZmlsbD0iIzEyMTIxMiIvPjwvc3ZnPg==',
+                    share: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE0Ljg3NSwxMy4xNDdhMi4zMDUsMi4zMDUsMCwwLDAtMS41NTIuNjFMNy42NzksMTAuNDcxYTIuNTkyLDIuNTkyLDAsMCwwLC4wNzEtLjU1NCwyLjU5MiwyLjU5MiwwLDAsMC0uMDcxLS41NTRMMTMuMjYsNi4xMDlhMi4zNywyLjM3LDAsMSwwLS43Ni0xLjczNCwyLjU5MiwyLjU5MiwwLDAsMCwuMDcxLjU1NEw2Ljk5LDguMTgzYTIuMzc1LDIuMzc1LDAsMSwwLDAsMy40NjdsNS42MzcsMy4yOTNhMi4yMzMsMi4yMzMsMCwwLDAtLjA2My41MTUsMi4zMTIsMi4zMTIsMCwxLDAsMi4zMTItMi4zMTJaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC42MjUgLTAuNDE3KSIvPjwvc3ZnPg==',
+                    exportSVG: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE3LjI1LDE1LjY2N1Y0LjU4M0ExLjU4OCwxLjU4OCwwLDAsMCwxNS42NjcsM0g0LjU4M0ExLjU4OCwxLjU4OCwwLDAsMCwzLDQuNTgzVjE1LjY2N0ExLjU4OCwxLjU4OCwwLDAsMCw0LjU4MywxNy4yNUgxNS42NjdBMS41ODgsMS41ODgsMCwwLDAsMTcuMjUsMTUuNjY3Wm0tOS45LTQuMzU0TDkuMzMzLDEzLjdsMi43NzEtMy41NywzLjU2Myw0Ljc1SDQuNTgzWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTAuNjI1IC0wLjYyNSkiIGZpbGw9IiMxMjEyMTIiLz48L3N2Zz4=',
+                    exportPNG: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE3LjI1LDE1LjY2N1Y0LjU4M0ExLjU4OCwxLjU4OCwwLDAsMCwxNS42NjcsM0g0LjU4M0ExLjU4OCwxLjU4OCwwLDAsMCwzLDQuNTgzVjE1LjY2N0ExLjU4OCwxLjU4OCwwLDAsMCw0LjU4MywxNy4yNUgxNS42NjdBMS41ODgsMS41ODgsMCwwLDAsMTcuMjUsMTUuNjY3Wm0tOS45LTQuMzU0TDkuMzMzLDEzLjdsMi43NzEtMy41NywzLjU2Myw0Ljc1SDQuNTgzWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTAuNjI1IC0wLjYyNSkiIGZpbGw9IiMxMjEyMTIiLz48L3N2Zz4=',
+                    print: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMTUuNDU4LDYuOTU4SDQuMzc1QTIuMzcyLDIuMzcyLDAsMCwwLDIsOS4zMzN2NC43NUg1LjE2N1YxNy4yNWg5LjVWMTQuMDgzaDMuMTY3VjkuMzMzQTIuMzcyLDIuMzcyLDAsMCwwLDE1LjQ1OCw2Ljk1OFptLTIuMzc1LDguNzA4SDYuNzVWMTEuNzA4aDYuMzMzWm0yLjM3NS01LjU0MmEuNzkyLjc5MiwwLDEsMSwuNzkyLS43OTJBLjc5NC43OTQsMCwwLDEsMTUuNDU4LDEwLjEyNVpNMTQuNjY3LDNoLTkuNVY2LjE2N2g5LjVaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC40MTcgLTAuNjI1KSIgZmlsbD0iIzEyMTIxMiIvPjxwYXRoIGQ9Ik0wLDBIMTlWMTlIMFoiIGZpbGw9Im5vbmUiLz48L3N2Zz4=',
+                    wizardBuilder: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMyAtMikiPjxwYXRoIGQ9Ik0xNywxOS4yMkg1VjdoN1Y1SDVBMi4wMDYsMi4wMDYsMCwwLDAsMyw3VjE5YTIuMDA2LDIuMDA2LDAsMCwwLDIsMkgxN2EyLjAwNiwyLjAwNiwwLDAsMCwyLTJWMTJIMTdaIiBmaWxsPSIjMjIyIi8+PHBhdGggZD0iTTE5LDJIMTdWNUgxNGMuMDEuMDEsMCwyLDAsMmgzVjkuOTljLjAxLjAxLDIsMCwyLDBWN2gzVjVIMTlaIiBmaWxsPSIjMjIyIi8+PHJlY3Qgd2lkdGg9IjgiIGhlaWdodD0iMiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNyA5KSIgZmlsbD0iIzIyMiIvPjxwYXRoIGQ9Ik03LDEydjJoOFYxMkg3WiIgZmlsbD0iIzIyMiIvPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDcgMTUpIiBmaWxsPSIjMjIyIi8+PC9nPjwvc3ZnPg=='
+                },
+                dark: {
+                    insights: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNNSw4LjMyNUg3LjM3NXY3Ljc1OEg1Wk05LjQzMyw1SDExLjY1VjE2LjA4M0g5LjQzM1ptNC40MzMsNi4zMzNoMi4yMTd2NC43NUgxMy44NjdaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMS4wNDIgLTEuMDQyKSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0wLDBIMTlWMTlIMFoiIGZpbGw9Im5vbmUiLz48L3N2Zz4=',
+                    clone: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTMuNTgzLDUuMTY3SDJWMTYuMjVhMS41ODgsMS41ODgsMCwwLDAsMS41ODMsMS41ODNIMTQuNjY3VjE2LjI1SDMuNTgzWk0xNi4yNSwySDYuNzVBMS41ODgsMS41ODgsMCwwLDAsNS4xNjcsMy41ODN2OS41QTEuNTg4LDEuNTg4LDAsMCwwLDYuNzUsMTQuNjY3aDkuNWExLjU4OCwxLjU4OCwwLDAsMCwxLjU4My0xLjU4M3YtOS41QTEuNTg4LDEuNTg4LDAsMCwwLDE2LjI1LDJabS0uNzkyLDcuMTI1SDEyLjI5MnYzLjE2N0gxMC43MDhWOS4xMjVINy41NDJWNy41NDJoMy4xNjdWNC4zNzVoMS41ODNWNy41NDJoMy4xNjdaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC40MTcgLTAuNDE3KSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==',
+                    share: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE0Ljg3NSwxMy4xNDdhMi4zMDUsMi4zMDUsMCwwLDAtMS41NTIuNjFMNy42NzksMTAuNDcxYTIuNTkyLDIuNTkyLDAsMCwwLC4wNzEtLjU1NCwyLjU5MiwyLjU5MiwwLDAsMC0uMDcxLS41NTRMMTMuMjYsNi4xMDlhMi4zNywyLjM3LDAsMSwwLS43Ni0xLjczNCwyLjU5MiwyLjU5MiwwLDAsMCwuMDcxLjU1NEw2Ljk5LDguMTgzYTIuMzc1LDIuMzc1LDAsMSwwLDAsMy40NjdsNS42MzcsMy4yOTNhMi4yMzMsMi4yMzMsMCwwLDAtLjA2My41MTUsMi4zMTIsMi4zMTIsMCwxLDAsMi4zMTItMi4zMTJaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC42MjUgLTAuNDE3KSIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==',
+                    exportSVG: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE3LjI1LDE1LjY2N1Y0LjU4M0ExLjU4OCwxLjU4OCwwLDAsMCwxNS42NjcsM0g0LjU4M0ExLjU4OCwxLjU4OCwwLDAsMCwzLDQuNTgzVjE1LjY2N0ExLjU4OCwxLjU4OCwwLDAsMCw0LjU4MywxNy4yNUgxNS42NjdBMS41ODgsMS41ODgsMCwwLDAsMTcuMjUsMTUuNjY3Wm0tOS45LTQuMzU0TDkuMzMzLDEzLjdsMi43NzEtMy41NywzLjU2Myw0Ljc1SDQuNTgzWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTAuNjI1IC0wLjYyNSkiIGZpbGw9IiNmZmYiLz48L3N2Zz4=',
+                    exportPNG: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMCwwSDE5VjE5SDBaIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE3LjI1LDE1LjY2N1Y0LjU4M0ExLjU4OCwxLjU4OCwwLDAsMCwxNS42NjcsM0g0LjU4M0ExLjU4OCwxLjU4OCwwLDAsMCwzLDQuNTgzVjE1LjY2N0ExLjU4OCwxLjU4OCwwLDAsMCw0LjU4MywxNy4yNUgxNS42NjdBMS41ODgsMS41ODgsMCwwLDAsMTcuMjUsMTUuNjY3Wm0tOS45LTQuMzU0TDkuMzMzLDEzLjdsMi43NzEtMy41NywzLjU2Myw0Ljc1SDQuNTgzWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTAuNjI1IC0wLjYyNSkiIGZpbGw9IiNmZmYiLz48L3N2Zz4=',
+                    print: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48cGF0aCBkPSJNMTUuNDU4LDYuOTU4SDQuMzc1QTIuMzcyLDIuMzcyLDAsMCwwLDIsOS4zMzN2NC43NUg1LjE2N1YxNy4yNWg5LjVWMTQuMDgzaDMuMTY3VjkuMzMzQTIuMzcyLDIuMzcyLDAsMCwwLDE1LjQ1OCw2Ljk1OFptLTIuMzc1LDguNzA4SDYuNzVWMTEuNzA4aDYuMzMzWm0yLjM3NS01LjU0MmEuNzkyLjc5MiwwLDEsMSwuNzkyLS43OTJBLjc5NC43OTQsMCwwLDEsMTUuNDU4LDEwLjEyNVpNMTQuNjY3LDNoLTkuNVY2LjE2N2g5LjVaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMC40MTcgLTAuNjI1KSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0wLDBIMTlWMTlIMFoiIGZpbGw9Im5vbmUiLz48L3N2Zz4=',
+                    wizardBuilder: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOSIgaGVpZ2h0PSIxOSIgdmlld0JveD0iMCAwIDE5IDE5Ij48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMyAtMikiPjxwYXRoIGQ9Ik0xNywxOS4yMkg1VjdoN1Y1SDVBMi4wMDYsMi4wMDYsMCwwLDAsMyw3VjE5YTIuMDA2LDIuMDA2LDAsMCwwLDIsMkgxN2EyLjAwNiwyLjAwNiwwLDAsMCwyLTJWMTJIMTdaIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTE5LDJIMTdWNUgxNGMuMDEuMDEsMCwyLDAsMmgzVjkuOTljLjAxLjAxLDIsMCwyLDBWN2gzVjVIMTlaIiBmaWxsPSIjZmZmIi8+PHJlY3Qgd2lkdGg9IjgiIGhlaWdodD0iMiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNyA5KSIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik03LDEydjJoOFYxMkg3WiIgZmlsbD0iI2ZmZiIvPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDcgMTUpIiBmaWxsPSIjZmZmIi8+PC9nPjwvc3ZnPg=='
+                }
+            }
+        };
+
+        /* Create "Designer". */
+        var designer = appmixer.ui.Designer({
+            el: '#your-designer',
+            options: designerOptions()
+        });
+        /* Create "Flow Manager". */
+        var flowManager = appmixer.ui.FlowManager({
+            el: '#your-flow-manager',
+            options: flowManagerOptions()
+        });
+
+        /* Create "Insights Dashboard". */
+        var insightsDashboard = appmixer.ui.InsightsDashboard({ el: '#your-insights-dashboard' });
+        /* Create "Insights Chart Editor". */
+        var insightsChartEditor = appmixer.ui.InsightsChartEditor({ el: '#your-insights-chart-editor' });
+        /* Create "Insights Logs". */
+        var insightsLogs = appmixer.ui.InsightsLogs({ el: '#your-insights-logs' });
+        /* Create "Accounts". */
+        var accounts = appmixer.ui.Accounts({ el: '#your-accounts' });
+        /* Create "People Tasks". */
+        var peopleTasks = appmixer.ui.PeopleTasks({ el: '#your-people-tasks' });
+        /* Create "Storage". */
+        var storage = appmixer.ui.Storage({ el: '#your-storage' });
+        /* Create "Integrations". */
+        var integrations = appmixer.ui.Integrations({ el: '#your-integrations'
+        ,options: { customFilter: {'sharedWith.scope': 'acme1','name': 'Slack Integration'}}
+        });
+
+        /* Create "Wizard" pop-up for integrations page. */
+        var wizard = appmixer.ui.Wizard();
+        /* Create "Files". */
+        var files = appmixer.ui.Files({ el: '#your-files' });
+        /* Bind "Flow Manager" events. */
+        flowManager.on('flow:create', () => {
+            flowManager.state('loader', true);
+            appmixer.api.createFlow('New flow').then((flowId) => {
+                flowManager.state('loader', false);
+                designer.set('flowId', flowId);
+                selectPage('designer');
+            }).catch((error) => {
+                flowManager.state('error', 'Creating flow failed.');
+            });
+        });
+        flowManager.on('flow:open', flowId => {
+            designer.set('flowId', flowId);
+            selectPage('designer');
+        });
+        flowManager.on('flow:insights', flowId => {
+            insightsLogs.set('flowId', flowId);
+            selectPage('insightsLogs');
+        });
+        /* Bind "Designer" events. */
+        designer.on('flow:insights-logs', (flowId) => {
+            insightsLogs.set('flowId', flowId);
+            selectPage('insightsLogs');
+        });
+        designer.on('flow:clone', (flowId) => {
+            designer.state('loader', true);
+            appmixer.api.cloneFlow(flowId, { prefix: 'Clone of ' }).then((cloneId) => {
+                designer.state('loader', false);
+                designer.set('flowId', cloneId);
+                designer.close();
+                designer.open();
+            }).catch((error) => {
+                designer.state('error', 'Cloning flow failed.');
+            });
+        });
+        /* Bind "Accounts" events. */
+        accounts.on('flow:open', (flowId) => {
+            designer.set('flowId', flowId);
+            selectPage('designer');
+        });
+        /* Bind "Chart Editor" events. */
+        insightsChartEditor.on('close', () => {
+            selectPage('insightsDashboard');
+        });
+        /* Bind "Chart Editor" events. */
+        insightsDashboard.on('chart:remove', (chartId) => {
+            appmixer.api.deleteChart(chartId).then(() => {
+                insightsDashboard.reload();
+            });
+        });
+        insightsDashboard.on('chart:open', (chartId) => {
+            insightsChartEditor.set('chartId', chartId);
+            selectPage('insightsChartEditor');
+        });
+        // /* Bind "Integrations" events. */
+        // integrations.on('integration:create', async (templateId) => {
+        //     wizard.close();
+        //     wizard.set('flowId', integrationId);
+        //     wizard.open();
+        // });
+        // integrations.on('integration:edit', (integrationId) => {
+        //     wizard.open(integrationId);
+        // });
+        // /* Bind "Wizard" events. */
+        // wizard.on('flow:start', async (flowId) => {
+        //     wizard.state('loader', true);
+        //     appmixer.api.startFlow(flowId).then(() => {
+        //         wizard.state('loader', false);
+        //         wizard.close();
+        //         integrations.reload();
+        //     }).catch((error) => {
+        //         wizard.state('error', 'Starting flow failed.');
+        //     });
+        // });
+
+
+
+/* Bind "Integrations" events. */
+integrations.on('integration:create', async (templateId) => {
+            // wizard.close();
+            const integrationId = await appmixer.api.cloneFlow(templateId, { connectAccounts: false });
+            await appmixer.api.updateFlow(integrationId, { templateId });
+            wizard.set('flowId', integrationId);
+            wizard.open();
+            integrations.reload();
+        });
+        integrations.on('integration:edit', (integrationId) => {
+            wizard.open(integrationId);
+        });
+        /* Bind "Wizard" events. */
+        wizard.on('flow:start', async (flowId) => {
+            wizard.state('loader', true);
+            appmixer.api.startFlow(flowId).then(() => {
+                wizard.state('loader', false);
+                wizard.close();
+                integrations.reload();
+            }).catch((error) => {
+                wizard.state('error', 'Starting flow failed.');
+            });
+        });
+
+
+        /* Opens the ChartEditor and clears the chartId */
+        function createChart() {
+            insightsChartEditor.set('chartId', undefined);
+            selectPage('insightsChartEditor');
+        }
+
+        /* Simple navigation for the purposes of this demo. */
+        function selectPage(name) {
+            document.querySelector('#menu').value = name;
+            var pages = {
+                designer: designer,
+                flowManager: flowManager,
+                accounts: accounts,
+                peopleTasks: peopleTasks,
+                insightsDashboard: insightsDashboard,
+                insightsChartEditor: insightsChartEditor,
+                insightsLogs: insightsLogs,
+                storage: storage,
+                integrations: integrations,
+                files: files
+            };
+            Object.values(pages).forEach(function(page) {
+                page.close();
+            });
+            pages[name].open();
+        }
+
+        document.querySelector('#menu').addEventListener('change', function(event) {
+            var value = event.target.value;
+            if (value === 'insightsChartEditor') {
+                insightsChartEditor.set('chartId', undefined);
+            }
+            selectPage(value);
+        });
+
+        function flowManagerOptions() {
+            return {
+                menu: [
+                    {
+                        label: labels.flowManager[lang].edit,
+                        event: 'flow:open',
+                        icon: icons.flowManager[theme].edit
+                    },
+                    {
+                        label: labels.flowManager[lang].clone,
+                        event: 'flow:clone',
+                        icon: icons.flowManager[theme].clone
+                    },
+                    {
+                        label: labels.flowManager[lang].share,
+                        event: 'flow:share',
+                        icon: icons.flowManager[theme].share
+                    },
+                    {
+                        label: labels.flowManager[lang].insights,
+                        event: 'flow:insights',
+                        icon: icons.flowManager[theme].insights
+                    },
+                    {
+                        label: labels.flowManager[lang].delete,
+                        event: 'flow:remove',
+                        icon: icons.flowManager[theme].remove
+                    }
+                ],
+                filters: [
+                    { property: 'stage', value: 'running', label: labels.flowManager[lang].runningFlows },
+                    { property: 'stage', value: 'stopped', label: labels.flowManager[lang].stoppedFlows },
+                    { property: 'sharedWith', value: 'myFlows', label: labels.flowManager[lang].myFlows },
+                    { property: 'sharedWith', value: 'sharedWithOthers', label: labels.flowManager[lang].sharedWithOthers },
+                    { property: 'sharedWith', value: 'sharedWithMe', label: labels.flowManager[lang].sharedWithMe }
+                ],
+                sorting: [
+                    { label: labels.flowManager[lang].lastModified, property: 'mtime', value: -1 },
+                    { label: labels.flowManager[lang].lastCreated, property: 'btime', value: -1 }
+                ],
+                // optional property, if not specified, share by email will be used by default
+                shareTypes: shareTypes[lang]
+            };
+        }
+
+        function designerOptions() {
+            return {
+                menu: [
+                    {
+                        label: labels.designer[lang].insightsLogs,
+                        event: 'flow:insights-logs',
+                        icon: icons.designer[theme].insights
+                    },
+                    { label: labels.designer[lang].clone, event: 'flow:clone', icon: icons.designer[theme].clone },
+                    { label: labels.designer[lang].share, event: 'flow:share', icon: icons.designer[theme].share },
+                    {
+                        label: labels.designer[lang].exportSVG,
+                        event: 'flow:export-svg',
+                        icon: icons.designer[theme].exportSVG
+                    },
+                    {
+                        label: labels.designer[lang].exportPNG,
+                        event: 'flow:export-png',
+                        icon: icons.designer[theme].exportPNG
+                    },
+                    { label: labels.designer[lang].print, event: 'flow:print', icon: icons.designer[theme].print },
+                    {
+                        label: labels.designer[lang].wizardBuilder,
+                        event: 'flow:wizard-builder',
+                        icon: icons.designer[theme].wizardBuilder
+                    }
+                ],
+                toolbar: [
+                    ['undo', 'redo'],
+                    ['zoom-to-fit', 'zoom-in', 'zoom-out'],
+                    ['logs']
+                ],
+                // optional properties, if not specified, share by email will be used by default
+                shareTypes: shareTypes[lang],
+                sharePermissions: sharePermissions[lang]
+            };
+        }
+
+        function selectTheme(selectedTheme) {
+            if (selectedTheme === 'light') {
+                theme = 'light';
+                appmixer.set('theme', {});
+            } else if (selectedTheme === 'dark') {
+                theme = 'dark';
+                appmixer.set('theme', window.THEME_DARK);
+            } else if (selectedTheme === 'light-custom-shapes') {
+                theme = 'light';
+                appmixer.set('theme', {
+                    $shapes: {
+                        $action: 'custom-action-shape',
+                        $trigger: 'custom-trigger-shape',
+                        $selection: 'custom-selection-shape',
+                        /**
+                         * Built-in default shapes are listed below:
+                         * 
+                         * $action: 'action'
+                         * $trigger: 'trigger'
+                         * 
+                         * $action: 'action-vertical'
+                         * $trigger: 'trigger-vertical'
+                         * 
+                         * $action: 'action-dark'
+                         * $trigger: 'trigger-dark'
+                         * 
+                         * $action: 'action-vertical-dark',
+                         * $trigger: 'trigger-vertical-dark',
+                         */
+                    }});
+            }
+            flowManager.set('options', flowManagerOptions());
+            designer.set('options', designerOptions());
+        }
+
+        function selectLanguage(selectedLang) {
+            lang = selectedLang;
+            if (lang === 'en') {
+                appmixer.set('strings', {});
+            } else {
+                appmixer.set('strings', window.STRINGS_ES);
+            }
+            flowManager.set('options', flowManagerOptions());
+            designer.set('options', designerOptions());
+        }
+
+        document.querySelector('#theme-select').addEventListener('change', function(event) {
+            var value = event.target.value;
+            selectTheme(value);
+        });
+
+        document.querySelector('#lang-select').addEventListener('change', function(event) {
+            var value = event.target.value;
+            selectLanguage(value);
+        });
+
+        selectPage(document.querySelector('#menu').value || 'flowManager');
+        selectTheme(document.querySelector('#theme-select').value || 'light');
+        selectLanguage(document.querySelector('#lang-select').value || 'en');
+        setTimeout(() => {
+            flowManager.reload();
+        }, 100);
+    }
+</script>
+</body>
+</html>
